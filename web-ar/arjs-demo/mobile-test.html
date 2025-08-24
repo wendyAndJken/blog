@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AR.js 移动端测试</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .test-item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid #4CC3D9;
+        }
+        
+        .test-item h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        
+        .test-item p {
+            margin: 0;
+            color: #666;
+            line-height: 1.5;
+        }
+        
+        .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .status.warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .button {
+            display: inline-block;
+            background: #4CC3D9;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 25px;
+            text-decoration: none;
+            margin: 10px 5px;
+            transition: background 0.3s;
+        }
+        
+        .button:hover {
+            background: #3BA8C0;
+        }
+        
+        .marker-info {
+            background: #e3f2fd;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .marker-image {
+            max-width: 200px;
+            border: 2px solid #4CC3D9;
+            border-radius: 10px;
+            margin: 10px auto;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📱 AR.js 移动端测试</h1>
+        
+        <div class="test-item">
+            <h3>设备检测 <span id="device-status" class="status">检测中...</span></h3>
+            <p id="device-info">正在检测您的设备信息...</p>
+        </div>
+        
+        <div class="test-item">
+            <h3>浏览器兼容性 <span id="browser-status" class="status">检测中...</span></h3>
+            <p id="browser-info">正在检测浏览器兼容性...</p>
+        </div>
+        
+        <div class="test-item">
+            <h3>WebGL支持 <span id="webgl-status" class="status">检测中...</span></h3>
+            <p id="webgl-info">正在检测WebGL支持...</p>
+        </div>
+        
+        <div class="test-item">
+            <h3>摄像头权限 <span id="camera-status" class="status">未测试</span></h3>
+            <p id="camera-info">点击下方按钮测试摄像头权限</p>
+            <button onclick="testCamera()" class="button">测试摄像头</button>
+        </div>
+        
+        <div class="marker-info">
+            <h3>🎯 Hiro Marker</h3>
+            <p>请打印或显示此Marker图案用于AR测试</p>
+            <img src="https://raw.githubusercontent.com/AR-js-org/AR.js/master/data/images/HIRO.jpg" 
+                 alt="Hiro Marker" class="marker-image">
+            <p><small>建议尺寸：A4纸张大小，确保图案清晰可见</small></p>
+        </div>
+        
+        <div style="text-align: center; margin-top: 30px;">
+            <a href="index-stable.html" class="button">🚀 开始AR体验</a>
+            <a href="index-offline.html" class="button">📱 离线版本</a>
+        </div>
+    </div>
+
+    <script>
+        // 设备检测
+        function detectDevice() {
+            const userAgent = navigator.userAgent;
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+            const isIOS = /iPad|iPhone|iPod/.test(userAgent);
+            const isAndroid = /Android/.test(userAgent);
+            const isChrome = /Chrome/.test(userAgent);
+            const isSafari = /Safari/.test(userAgent) && !/Chrome/.test(userAgent);
+            
+            const deviceInfo = document.getElementById('device-info');
+            const deviceStatus = document.getElementById('device-status');
+            
+            let info = `设备类型: ${isMobile ? '移动设备' : '桌面设备'}<br>`;
+            info += `操作系统: ${isIOS ? 'iOS' : isAndroid ? 'Android' : '其他'}<br>`;
+            info += `浏览器: ${isChrome ? 'Chrome' : isSafari ? 'Safari' : '其他'}<br>`;
+            info += `User Agent: ${userAgent.substring(0, 100)}...`;
+            
+            deviceInfo.innerHTML = info;
+            
+            if (isMobile) {
+                deviceStatus.textContent = '支持';
+                deviceStatus.className = 'status success';
+            } else {
+                deviceStatus.textContent = '桌面设备';
+                deviceStatus.className = 'status warning';
+            }
+        }
+        
+        // 浏览器兼容性检测
+        function detectBrowser() {
+            const browserInfo = document.getElementById('browser-info');
+            const browserStatus = document.getElementById('browser-status');
+            
+            const features = {
+                'WebGL': !!window.WebGLRenderingContext,
+                'WebRTC': !!navigator.mediaDevices,
+                'getUserMedia': !!navigator.mediaDevices?.getUserMedia,
+                'Touch Events': 'ontouchstart' in window,
+                'Device Orientation': 'ondeviceorientation' in window,
+                'Vibration': 'vibrate' in navigator
+            };
+            
+            let info = '';
+            let supportedCount = 0;
+            
+            for (const [feature, supported] of Object.entries(features)) {
+                const status = supported ? '✅' : '❌';
+                info += `${feature}: ${status}<br>`;
+                if (supported) supportedCount++;
+            }
+            
+            browserInfo.innerHTML = info;
+            
+            const supportRate = (supportedCount / Object.keys(features).length * 100).toFixed(0);
+            if (supportRate >= 80) {
+                browserStatus.textContent = '优秀';
+                browserStatus.className = 'status success';
+            } else if (supportRate >= 60) {
+                browserStatus.textContent = '良好';
+                browserStatus.className = 'status warning';
+            } else {
+                browserStatus.textContent = '较差';
+                browserStatus.className = 'status error';
+            }
+        }
+        
+        // WebGL检测
+        function detectWebGL() {
+            const webglInfo = document.getElementById('webgl-info');
+            const webglStatus = document.getElementById('webgl-status');
+            
+            try {
+                const canvas = document.createElement('canvas');
+                const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                
+                if (gl) {
+                    const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                    const renderer = debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : 'Unknown';
+                    const vendor = debugInfo ? gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) : 'Unknown';
+                    
+                    webglInfo.innerHTML = `
+                        WebGL版本: ${gl.getParameter(gl.VERSION)}<br>
+                        渲染器: ${renderer}<br>
+                        供应商: ${vendor}<br>
+                        最大纹理尺寸: ${gl.getParameter(gl.MAX_TEXTURE_SIZE)}x${gl.getParameter(gl.MAX_TEXTURE_SIZE)}
+                    `;
+                    
+                    webglStatus.textContent = '支持';
+                    webglStatus.className = 'status success';
+                } else {
+                    webglInfo.textContent = 'WebGL不支持';
+                    webglStatus.textContent = '不支持';
+                    webglStatus.className = 'status error';
+                }
+            } catch (error) {
+                webglInfo.textContent = 'WebGL检测失败: ' + error.message;
+                webglStatus.textContent = '检测失败';
+                webglStatus.className = 'status error';
+            }
+        }
+        
+        // 摄像头测试
+        async function testCamera() {
+            const cameraInfo = document.getElementById('camera-info');
+            const cameraStatus = document.getElementById('camera-status');
+            
+            cameraStatus.textContent = '测试中...';
+            cameraStatus.className = 'status warning';
+            cameraInfo.textContent = '正在请求摄像头权限...';
+            
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 },
+                        facingMode: 'environment'
+                    } 
+                });
+                
+                const track = stream.getVideoTracks()[0];
+                const capabilities = track.getCapabilities();
+                const settings = track.getSettings();
+                
+                cameraInfo.innerHTML = `
+                    摄像头权限: ✅ 已授权<br>
+                    分辨率: ${settings.width}x${settings.height}<br>
+                    帧率: ${settings.frameRate || '未知'} fps<br>
+                    设备ID: ${settings.deviceId ? settings.deviceId.substring(0, 20) + '...' : '未知'}
+                `;
+                
+                cameraStatus.textContent = '可用';
+                cameraStatus.className = 'status success';
+                
+                // 停止摄像头
+                stream.getTracks().forEach(track => track.stop());
+                
+            } catch (error) {
+                cameraInfo.textContent = '摄像头访问失败: ' + error.message;
+                cameraStatus.textContent = '失败';
+                cameraStatus.className = 'status error';
+            }
+        }
+        
+        // 页面加载完成后执行检测
+        window.addEventListener('load', function() {
+            detectDevice();
+            detectBrowser();
+            detectWebGL();
+        });
+    </script>
+</body>
+</html>

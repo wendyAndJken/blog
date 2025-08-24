@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AR.js 视频尺寸测试</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #000;
+            color: #fff;
+            overflow: hidden;
+        }
+
+        .container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        .video-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #111;
+        }
+
+        .video-info {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.8);
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 14px;
+            z-index: 1000;
+            max-width: 300px;
+            backdrop-filter: blur(10px);
+        }
+
+        .controls {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.8);
+            padding: 15px;
+            border-radius: 10px;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+
+        .controls button {
+            background: #4CC3D9;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .controls button:hover {
+            background: #3BA8C0;
+        }
+
+        .status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.8);
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+
+        .error {
+            background: rgba(255,0,0,0.8);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+
+        .success {
+            background: rgba(0,255,0,0.8);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+
+        .warning {
+            background: rgba(255,255,0,0.8);
+            color: black;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+
+        #videoElement {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .dimension-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            z-index: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="video-container">
+            <video id="videoElement" autoplay muted playsinline></video>
+            <div class="dimension-overlay" id="dimensionOverlay">
+                等待摄像头...
+            </div>
+        </div>
+
+        <div class="video-info" id="videoInfo">
+            <h3>📹 视频信息</h3>
+            <div id="infoContent">正在获取摄像头信息...</div>
+        </div>
+
+        <div class="status" id="status">
+            状态: 初始化中...
+        </div>
+
+        <div class="controls">
+            <button onclick="startCamera()">🎥 启动摄像头</button>
+            <button onclick="stopCamera()">⏹️ 停止摄像头</button>
+            <button onclick="changeResolution()">📐 切换分辨率</button>
+            <button onclick="showDebugInfo()">🔍 调试信息</button>
+            <button onclick="fixDimensions()">🔧 修复尺寸</button>
+        </div>
+    </div>
+
+    <script>
+        let videoStream = null;
+        let currentConstraints = {
+            video: {
+                width: { ideal: 1280 },
+                height: { ideal: 720 },
+                facingMode: 'environment'
+            }
+        };
+
+        const resolutions = [
+            { width: 640, height: 480, name: 'VGA' },
+            { width: 1280, height: 720, name: 'HD' },
+            { width: 1920, height: 1080, name: 'Full HD' },
+            { width: 1280, height: 960, name: '4:3 HD' },
+            { width: 854, height: 480, name: 'WVGA' }
+        ];
+
+        let currentResolutionIndex = 1;
+
+        // 启动摄像头
+        async function startCamera() {
+            try {
+                updateStatus('正在启动摄像头...');
+                
+                // 停止现有流
+                if (videoStream) {
+                    stopCamera();
+                }
+
+                // 获取摄像头权限
+                videoStream = await navigator.mediaDevices.getUserMedia(currentConstraints);
+                
+                const video = document.getElementById('videoElement');
+                video.srcObject = videoStream;
+                
+                // 等待视频加载
+                video.onloadedmetadata = function() {
+                    updateVideoInfo();
+                    updateStatus('摄像头启动成功');
+                };
+
+                video.onerror = function() {
+                    updateStatus('摄像头启动失败', 'error');
+                };
+
+            } catch (error) {
+                console.error('摄像头启动失败:', error);
+                updateStatus('摄像头启动失败: ' + error.message, 'error');
+            }
+        }
+
+        // 停止摄像头
+        function stopCamera() {
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+                videoStream = null;
+            }
+            
+            const video = document.getElementById('videoElement');
+            video.srcObject = null;
+            
+            updateStatus('摄像头已停止');
+            updateVideoInfo();
+        }
+
+        // 切换分辨率
+        async function changeResolution() {
+            currentResolutionIndex = (currentResolutionIndex + 1) % resolutions.length;
+            const resolution = resolutions[currentResolutionIndex];
+            
+            currentConstraints.video = {
+                width: { ideal: resolution.width },
+                height: { ideal: resolution.height },
+                facingMode: 'environment'
+            };
+
+            updateStatus(`切换到 ${resolution.name} (${resolution.width}x${resolution.height})`);
+            
+            if (videoStream) {
+                await startCamera();
+            }
+        }
+
+        // 更新视频信息
+        function updateVideoInfo() {
+            const video = document.getElementById('videoElement');
+            const infoContent = document.getElementById('infoContent');
+            const overlay = document.getElementById('dimensionOverlay');
+
+            if (!video.srcObject) {
+                infoContent.innerHTML = '<div class="warning">摄像头未启动</div>';
+                overlay.textContent = '摄像头未启动';
+                return;
+            }
+
+            const info = `
+                <div><strong>实际尺寸:</strong> ${video.videoWidth} x ${video.videoHeight}</div>
+                <div><strong>显示尺寸:</strong> ${video.offsetWidth} x ${video.offsetHeight}</div>
+                <div><strong>设备像素比:</strong> ${window.devicePixelRatio}</div>
+                <div><strong>屏幕尺寸:</strong> ${window.innerWidth} x ${window.innerHeight}</div>
+                <div><strong>视频就绪状态:</strong> ${video.readyState}</div>
+                <div><strong>当前分辨率:</strong> ${resolutions[currentResolutionIndex].name}</div>
+            `;
+
+            infoContent.innerHTML = info;
+
+            // 更新覆盖层
+            overlay.textContent = `${video.videoWidth} x ${video.videoHeight}`;
+
+            // 检查尺寸是否正常
+            if (video.videoWidth === 0 || video.videoHeight === 0) {
+                infoContent.innerHTML += '<div class="error">⚠️ 视频尺寸异常</div>';
+            } else {
+                infoContent.innerHTML += '<div class="success">✅ 视频尺寸正常</div>';
+            }
+        }
+
+        // 修复视频尺寸
+        function fixDimensions() {
+            const video = document.getElementById('videoElement');
+            if (!video.srcObject) {
+                alert('请先启动摄像头');
+                return;
+            }
+
+            // 尝试修复视频尺寸
+            const tracks = video.srcObject.getTracks();
+            tracks.forEach(track => {
+                if (track.kind === 'video') {
+                    const capabilities = track.getCapabilities();
+                    console.log('摄像头能力:', capabilities);
+                    
+                    if (capabilities.width && capabilities.height) {
+                        const settings = {
+                            width: { ideal: 1280 },
+                            height: { ideal: 720 }
+                        };
+                        
+                        track.applyConstraints(settings)
+                            .then(() => {
+                                console.log('视频约束应用成功');
+                                updateVideoInfo();
+                            })
+                            .catch(error => {
+                                console.error('视频约束应用失败:', error);
+                            });
+                    }
+                }
+            });
+        }
+
+        // 显示调试信息
+        function showDebugInfo() {
+            const video = document.getElementById('videoElement');
+            const info = `
+设备信息:
+- User Agent: ${navigator.userAgent}
+- 平台: ${navigator.platform}
+- 语言: ${navigator.language}
+- 在线状态: ${navigator.onLine}
+
+视频信息:
+- 视频元素: ${video ? '存在' : '不存在'}
+- 视频流: ${video.srcObject ? '存在' : '不存在'}
+- 实际尺寸: ${video.videoWidth} x ${video.videoHeight}
+- 显示尺寸: ${video.offsetWidth} x ${video.offsetHeight}
+- 就绪状态: ${video.readyState}
+- 播放状态: ${!video.paused ? '播放中' : '暂停'}
+
+摄像头约束:
+${JSON.stringify(currentConstraints, null, 2)}
+            `;
+
+            console.log(info);
+            alert(info);
+        }
+
+        // 更新状态
+        function updateStatus(message, type = 'info') {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = '状态: ' + message;
+            
+            // 移除之前的样式类
+            statusEl.className = 'status';
+            
+            // 添加新的样式类
+            if (type === 'error') {
+                statusEl.style.background = 'rgba(255,0,0,0.8)';
+            } else if (type === 'success') {
+                statusEl.style.background = 'rgba(0,255,0,0.8)';
+            } else {
+                statusEl.style.background = 'rgba(0,0,0,0.8)';
+            }
+        }
+
+        // 页面加载完成后自动启动摄像头
+        window.addEventListener('load', function() {
+            updateStatus('页面加载完成，准备启动摄像头');
+            
+            // 检查摄像头支持
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                updateStatus('浏览器不支持摄像头API', 'error');
+                return;
+            }
+
+            // 延迟启动摄像头
+            setTimeout(() => {
+                startCamera();
+            }, 1000);
+        });
+
+        // 监听窗口大小变化
+        window.addEventListener('resize', function() {
+            updateVideoInfo();
+        });
+
+        // 监听视频事件
+        document.getElementById('videoElement').addEventListener('loadedmetadata', function() {
+            updateVideoInfo();
+        });
+
+        // 定期更新视频信息
+        setInterval(updateVideoInfo, 2000);
+    </script>
+</body>
+</html>

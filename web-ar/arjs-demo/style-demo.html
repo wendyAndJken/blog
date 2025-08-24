@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AR.js 样式演示</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <style>
+        /* CSS变量定义 - 支持主题切换 */
+        :root {
+            --primary-color: #4CC3D9;
+            --primary-hover: #3BA8C0;
+            --secondary-color: #FF6B6B;
+            --success-color: #4ECDC4;
+            --warning-color: #FFEAA7;
+            --error-color: #FF5252;
+            
+            --bg-primary: #000000;
+            --bg-secondary: rgba(0,0,0,0.8);
+            --bg-tertiary: rgba(0,0,0,0.95);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255,255,255,0.8);
+            
+            --border-radius-sm: 8px;
+            --border-radius-md: 15px;
+            --border-radius-lg: 20px;
+            --border-radius-xl: 25px;
+            
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.1);
+            --shadow-md: 0 4px 16px rgba(0,0,0,0.15);
+            --shadow-lg: 0 8px 32px rgba(0,0,0,0.2);
+            
+            --blur-sm: blur(8px);
+            --blur-md: blur(12px);
+            --blur-lg: blur(16px);
+            
+            --transition-fast: 0.2s ease;
+            --transition-normal: 0.3s ease;
+            --transition-slow: 0.5s ease;
+        }
+
+        /* 亮色主题变量 */
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: rgba(255,255,255,0.9);
+            --bg-tertiary: rgba(255,255,255,0.98);
+            --text-primary: #000000;
+            --text-secondary: rgba(0,0,0,0.8);
+        }
+
+        /* 基础样式重置 */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+        }
+
+        .demo-section {
+            margin-bottom: 3rem;
+            padding: 2rem;
+            background: var(--bg-secondary);
+            border-radius: var(--border-radius-lg);
+            backdrop-filter: var(--blur-md);
+            -webkit-backdrop-filter: var(--blur-md);
+            box-shadow: var(--shadow-md);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .demo-section h2 {
+            margin-bottom: 1.5rem;
+            color: var(--primary-color);
+            font-size: 1.5rem;
+        }
+
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .demo-item {
+            padding: 1.5rem;
+            background: var(--bg-tertiary);
+            border-radius: var(--border-radius-md);
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all var(--transition-normal);
+        }
+
+        .demo-item:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .demo-item h3 {
+            margin-bottom: 1rem;
+            color: var(--secondary-color);
+        }
+
+        /* 按钮样式演示 */
+        .button-demo {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: var(--border-radius-md);
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-normal);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+            color: white;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, var(--secondary-color), #FF5252);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success-color), #45B7D1);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        /* 加载动画演示 */
+        .loading-demo {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255,255,255,0.2);
+            border-top: 3px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1.2s linear infinite;
+        }
+
+        .spinner-large {
+            width: 60px;
+            height: 60px;
+            border-width: 4px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 状态指示器演示 */
+        .status-demo {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .status {
+            padding: 0.5rem 1rem;
+            border-radius: var(--border-radius-sm);
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .status-success {
+            background: rgba(78, 205, 196, 0.2);
+            color: var(--success-color);
+            border: 1px solid var(--success-color);
+        }
+
+        .status-warning {
+            background: rgba(255, 234, 167, 0.2);
+            color: var(--warning-color);
+            border: 1px solid var(--warning-color);
+        }
+
+        .status-error {
+            background: rgba(255, 82, 82, 0.2);
+            color: var(--error-color);
+            border: 1px solid var(--error-color);
+        }
+
+        /* 主题切换按钮 */
+        .theme-toggle {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            background: var(--bg-secondary);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: var(--border-radius-md);
+            padding: 0.75rem;
+            cursor: pointer;
+            backdrop-filter: var(--blur-sm);
+            -webkit-backdrop-filter: var(--blur-sm);
+            transition: all var(--transition-normal);
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1);
+        }
+
+        /* 响应式设计演示 */
+        .responsive-demo {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .responsive-item {
+            padding: 1rem;
+            background: var(--bg-tertiary);
+            border-radius: var(--border-radius-sm);
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        /* 动画演示 */
+        .animation-demo {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .animated-box {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-radius: var(--border-radius-md);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .demo-section {
+                padding: 1.5rem;
+            }
+
+            .demo-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .theme-toggle {
+                top: 1rem;
+                right: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .demo-section {
+                padding: 1rem;
+            }
+
+            .button-demo {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+
+        /* 无障碍支持 */
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* 焦点样式 */
+        button:focus,
+        .btn:focus {
+            outline: 2px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="theme-toggle" onclick="toggleTheme()" title="切换主题">
+        🌓
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>🎨 AR.js 样式演示</h1>
+            <p>展示移动端适配的所有样式特性和设计系统</p>
+        </div>
+
+        <div class="demo-section">
+            <h2>🎯 按钮组件</h2>
+            <div class="button-demo">
+                <button class="btn btn-primary">主要按钮</button>
+                <button class="btn btn-secondary">次要按钮</button>
+                <button class="btn btn-success">成功按钮</button>
+            </div>
+            <p>所有按钮都支持悬停效果和触摸反馈</p>
+        </div>
+
+        <div class="demo-section">
+            <h2>⚡ 加载动画</h2>
+            <div class="loading-demo">
+                <div class="spinner"></div>
+                <div class="spinner spinner-large"></div>
+            </div>
+            <p>流畅的加载动画，支持不同尺寸</p>
+        </div>
+
+        <div class="demo-section">
+            <h2>📊 状态指示器</h2>
+            <div class="status-demo">
+                <div class="status status-success">✅ 成功状态</div>
+                <div class="status status-warning">⚠️ 警告状态</div>
+                <div class="status status-error">❌ 错误状态</div>
+            </div>
+            <p>清晰的状态反馈，支持多种状态类型</p>
+        </div>
+
+        <div class="demo-section">
+            <h2>📱 响应式设计</h2>
+            <div class="responsive-demo">
+                <div class="responsive-item">
+                    <h4>📱 移动端</h4>
+                    <p>适配小屏幕设备</p>
+                </div>
+                <div class="responsive-item">
+                    <h4>💻 桌面端</h4>
+                    <p>适配大屏幕设备</p>
+                </div>
+                <div class="responsive-item">
+                    <h4>🔄 自适应</h4>
+                    <p>自动调整布局</p>
+                </div>
+            </div>
+            <p>使用CSS Grid和Flexbox实现完美响应式布局</p>
+        </div>
+
+        <div class="demo-section">
+            <h2>🎭 动画效果</h2>
+            <div class="animation-demo">
+                <div class="animated-box"></div>
+            </div>
+            <p>流畅的CSS动画，支持减少动画偏好设置</p>
+        </div>
+
+        <div class="demo-section">
+            <h2>🎨 设计系统</h2>
+            <div class="demo-grid">
+                <div class="demo-item">
+                    <h3>🎨 颜色系统</h3>
+                    <p>使用CSS变量定义统一的颜色方案</p>
+                    <ul>
+                        <li>主色调: #4CC3D9</li>
+                        <li>辅助色: #FF6B6B</li>
+                        <li>成功色: #4ECDC4</li>
+                    </ul>
+                </div>
+                <div class="demo-item">
+                    <h3>📐 间距系统</h3>
+                    <p>统一的间距和圆角设计</p>
+                    <ul>
+                        <li>小圆角: 8px</li>
+                        <li>中圆角: 15px</li>
+                        <li>大圆角: 20px</li>
+                    </ul>
+                </div>
+                <div class="demo-item">
+                    <h3>🌫️ 毛玻璃效果</h3>
+                    <p>现代化的背景模糊效果</p>
+                    <ul>
+                        <li>轻微模糊: 8px</li>
+                        <li>中等模糊: 12px</li>
+                        <li>重度模糊: 16px</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h2>♿ 无障碍支持</h2>
+            <div class="demo-grid">
+                <div class="demo-item">
+                    <h3>🎯 焦点管理</h3>
+                    <p>清晰的焦点指示器，支持键盘导航</p>
+                </div>
+                <div class="demo-item">
+                    <h3>🎭 动画偏好</h3>
+                    <p>尊重用户的动画偏好设置</p>
+                </div>
+                <div class="demo-item">
+                    <h3>📱 触摸优化</h3>
+                    <p>优化的触摸交互体验</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h2>🔗 快速链接</h2>
+            <div class="button-demo">
+                <a href="index-stable.html" class="btn btn-primary">🚀 AR体验</a>
+                <a href="mobile-test.html" class="btn btn-secondary">📱 设备测试</a>
+                <a href="README-mobile.md" class="btn btn-success">📖 文档</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 主题切换功能
+        function toggleTheme() {
+            const body = document.body;
+            const currentTheme = body.getAttribute('data-theme');
+            
+            if (currentTheme === 'light') {
+                body.removeAttribute('data-theme');
+            } else {
+                body.setAttribute('data-theme', 'light');
+            }
+        }
+
+        // 检测系统主题偏好
+        function detectSystemTheme() {
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+                document.body.setAttribute('data-theme', 'light');
+            }
+        }
+
+        // 监听系统主题变化
+        if (window.matchMedia) {
+            window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', detectSystemTheme);
+        }
+
+        // 页面加载时检测主题
+        window.addEventListener('load', detectSystemTheme);
+
+        // 添加一些交互效果
+        document.querySelectorAll('.btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                // 创建涟漪效果
+                const ripple = document.createElement('span');
+                const rect = this.getBoundingClientRect();
+                const size = Math.max(rect.width, rect.height);
+                const x = e.clientX - rect.left - size / 2;
+                const y = e.clientY - rect.top - size / 2;
+                
+                ripple.style.cssText = `
+                    position: absolute;
+                    width: ${size}px;
+                    height: ${size}px;
+                    left: ${x}px;
+                    top: ${y}px;
+                    background: rgba(255,255,255,0.3);
+                    border-radius: 50%;
+                    transform: scale(0);
+                    animation: ripple 0.6s linear;
+                    pointer-events: none;
+                `;
+                
+                this.style.position = 'relative';
+                this.style.overflow = 'hidden';
+                this.appendChild(ripple);
+                
+                setTimeout(() => {
+                    ripple.remove();
+                }, 600);
+            });
+        });
+
+        // 添加涟漪动画
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes ripple {
+                to {
+                    transform: scale(4);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
