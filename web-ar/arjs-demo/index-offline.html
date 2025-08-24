@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AR.js Demo - 离线版本</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background: #000;
+            color: white;
+        }
+        .container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        .ar-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            pointer-events: auto;
+        }
+        .cube {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(45deg, #4CC3D9, #FF6B6B);
+            margin: 20px auto;
+            border-radius: 10px;
+            animation: rotate 2s linear infinite;
+            box-shadow: 0 0 20px rgba(76, 195, 217, 0.5);
+        }
+        .sphere {
+            width: 60px;
+            height: 60px;
+            background: radial-gradient(circle, #FF6B6B, #FF8E8E);
+            border-radius: 50%;
+            margin: 20px auto;
+            animation: pulse 1s ease-in-out infinite alternate;
+            cursor: pointer;
+            box-shadow: 0 0 15px rgba(255, 107, 107, 0.5);
+        }
+        .text {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 10px 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        }
+        .controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        .btn {
+            background: rgba(0,0,0,0.7);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn:hover {
+            background: rgba(0,0,0,0.9);
+        }
+        .instructions {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 14px;
+            z-index: 1000;
+        }
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            z-index: 1000;
+        }
+        @keyframes rotate {
+            from { transform: rotateY(0deg); }
+            to { transform: rotateY(360deg); }
+        }
+        @keyframes pulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.2); }
+        }
+        .marker-detected {
+            border: 3px solid #00ff00;
+            animation: glow 1s ease-in-out infinite alternate;
+        }
+        @keyframes glow {
+            from { box-shadow: 0 0 20px rgba(0, 255, 0, 0.5); }
+            to { box-shadow: 0 0 30px rgba(0, 255, 0, 0.8); }
+        }
+    </style>
+</head>
+<body>
+    <div class="loading" id="loading">
+        正在启动摄像头...
+    </div>
+
+    <div class="controls">
+        <button class="btn" onclick="startCamera()">开始摄像头</button>
+        <button class="btn" onclick="stopCamera()">停止摄像头</button>
+        <button class="btn" onclick="toggleAR()">切换AR模式</button>
+    </div>
+
+    <div class="instructions">
+        <strong>离线AR Demo</strong><br>
+        1. 点击"开始摄像头"按钮<br>
+        2. 允许摄像头权限<br>
+        3. 将摄像头对准Hiro marker图片<br>
+        4. 观察AR效果
+    </div>
+
+    <div class="container" id="container">
+        <video class="video" id="video" autoplay muted></video>
+        <div class="overlay" id="overlay">
+            <div class="ar-content" id="ar-content">
+                <div class="cube" id="cube"></div>
+                <div class="text">AR.js 离线演示</div>
+                <div class="sphere" id="sphere" onclick="handleClick()"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let video = null;
+        let stream = null;
+        let isARMode = false;
+        let isRunning = false;
+
+        // 启动摄像头
+        async function startCamera() {
+            if (isRunning) return;
+            
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 },
+                        facingMode: 'environment'
+                    }
+                });
+                
+                video = document.getElementById('video');
+                video.srcObject = stream;
+                isRunning = true;
+                
+                document.getElementById('loading').style.display = 'none';
+                console.log('摄像头启动成功');
+                
+            } catch (error) {
+                console.error('摄像头启动失败:', error);
+                alert('摄像头启动失败: ' + error.message);
+            }
+        }
+
+        // 停止摄像头
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+            
+            if (video) {
+                video.srcObject = null;
+            }
+            
+            isRunning = false;
+            document.getElementById('loading').style.display = 'block';
+            console.log('摄像头已停止');
+        }
+
+        // 切换AR模式
+        function toggleAR() {
+            isARMode = !isARMode;
+            const content = document.getElementById('ar-content');
+            
+            if (isARMode) {
+                content.style.display = 'none';
+                console.log('AR模式已开启');
+            } else {
+                content.style.display = 'block';
+                console.log('AR模式已关闭');
+            }
+        }
+
+        // 处理点击事件
+        function handleClick() {
+            const sphere = document.getElementById('sphere');
+            sphere.style.animation = 'rotate 1s linear';
+            
+            setTimeout(() => {
+                sphere.style.animation = 'pulse 1s ease-in-out infinite alternate';
+            }, 1000);
+            
+            alert('你点击了AR物体！');
+        }
+
+        // 模拟marker检测
+        function simulateMarkerDetection() {
+            const content = document.getElementById('ar-content');
+            const cube = document.getElementById('cube');
+            
+            // 随机模拟marker检测
+            setInterval(() => {
+                if (isARMode && Math.random() > 0.7) {
+                    content.style.display = 'block';
+                    cube.classList.add('marker-detected');
+                    
+                    setTimeout(() => {
+                        cube.classList.remove('marker-detected');
+                    }, 2000);
+                }
+            }, 1000);
+        }
+
+        // 页面加载完成后初始化
+        window.addEventListener('load', () => {
+            // 自动启动摄像头
+            setTimeout(startCamera, 1000);
+            
+            // 启动模拟检测
+            simulateMarkerDetection();
+        });
+
+        // 页面卸载时清理资源
+        window.addEventListener('beforeunload', stopCamera);
+    </script>
+</body>
+</html>

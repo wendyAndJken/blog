@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AR.js Demo - 本地版本</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 使用本地或备用CDN -->
+    <script src="https://unpkg.com/aframe@1.4.0/dist/aframe.min.js"></script>
+    <script src="https://unpkg.com/aframe-ar@1.4.0/dist/aframe-ar.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            z-index: 1000;
+        }
+        .instructions {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 14px;
+            z-index: 1000;
+        }
+        .error {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            background: rgba(255,0,0,0.8);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 14px;
+            z-index: 1000;
+            display: none;
+        }
+    </style>
+</head>
+<body style="margin: 0; overflow: hidden;">
+    <div class="loading" id="loading">
+        正在加载AR场景...
+    </div>
+    
+    <div class="error" id="error">
+        <strong>加载失败</strong><br>
+        请检查网络连接或使用备用链接
+    </div>
+    
+    <div class="instructions">
+        <strong>使用说明：</strong><br>
+        1. 允许摄像头权限<br>
+        2. 将摄像头对准Marker图案<br>
+        3. 等待3D模型出现<br>
+        4. 移动设备查看不同角度
+    </div>
+
+    <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
+        <!-- 定义Marker -->
+        <a-marker preset="hiro">
+            <!-- 3D模型 - 简单的立方体 -->
+            <a-box position="0 0.5 0" 
+                   material="color: #4CC3D9;"
+                   animation="property: rotation; to: 0 360 0; dur: 2000; easing: linear; loop: true">
+            </a-box>
+            
+            <!-- 文字标签 -->
+            <a-text value="AR.js Demo" 
+                    position="0 1.5 0" 
+                    align="center" 
+                    color="#FFFFFF"
+                    font="kelsonsans">
+            </a-text>
+            
+            <!-- 点击交互 -->
+            <a-sphere position="0 0.5 1" 
+                      radius="0.2" 
+                      color="#FF6B6B"
+                      class="clickable"
+                      animation="property: scale; to: 1.2 1.2 1.2; dur: 1000; easing: easeInOutQuad; direction: alternate; loop: true">
+            </a-sphere>
+        </a-marker>
+
+        <!-- 相机实体 -->
+        <a-entity camera></a-entity>
+    </a-scene>
+
+    <script>
+        // 检查A-Frame是否加载成功
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                if (typeof AFRAME === 'undefined') {
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('error').style.display = 'block';
+                } else {
+                    document.getElementById('loading').style.display = 'none';
+                }
+            }, 3000);
+        });
+
+        // 添加点击交互
+        document.addEventListener('click', function(event) {
+            const intersectedElement = event.detail.intersectedEl;
+            if (intersectedElement && intersectedElement.classList.contains('clickable')) {
+                // 点击球体时的效果
+                intersectedElement.setAttribute('animation', {
+                    property: 'rotation',
+                    to: '0 360 0',
+                    dur: 1000,
+                    easing: 'easeInOutQuad'
+                });
+                
+                // 显示提示
+                alert('你点击了AR物体！');
+            }
+        });
+    </script>
+</body>
+</html>
